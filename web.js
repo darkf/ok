@@ -8,6 +8,14 @@ var conv = require('./convert');
 
 var PORT = 8080;
 
+function read(x) {
+	var f = conv.tojs(x);
+	if (typeof f !== 'string') { throw Error('ERROR: type'); }
+	if (!f) { throw Error('ERROR: no path'); }
+	f = path.resolve(process.cwd(), f);
+	return conv.tok(fs.statSync(f).isDirectory() ? fs.readdirSync(f) : fs.readFileSync(f, 'utf8').split(/\r?\n/));
+}
+
 function writer(response) {
 	return function write(x, y) {
 		var s = conv.tojs(y);
@@ -23,6 +31,9 @@ function writer(response) {
 		return y;
 	}
 }
+
+for (var i = 0; i < 2; i++) { ok.setIO('0:', i, read ); }
+// write is per-request, defined below
 
 function run(response, parts, path, data) {
 	console.log("data:", data);
