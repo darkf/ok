@@ -35,7 +35,7 @@ function writer(response) {
 for (var i = 0; i < 2; i++) { ok.setIO('0:', i, read ); }
 // write is per-request, defined below
 
-function run(response, parts, path, data) {
+function run(response, parts, path, host, data) {
 	console.log("data:", data);
     var program = fs.readFileSync(path, 'utf8');
     var env = ok.baseEnv();
@@ -43,25 +43,27 @@ function run(response, parts, path, data) {
 	for (var i = 2; i < 6; i++) { ok.setIO('0:', i, write); }
 	env.put("path", true, conv.tok(parts.href));
 	env.put("query", true, conv.tok(data));
+	env.put("host", true, conv.tok(host));
     ok.run(ok.parse(program), env);
 }
 
 function handleRequest(request, response){
 	var parts = url.parse(request.url);
 	var path = parts.pathname.slice(1);
+	var host = request.headers['host'];
 
     if(request.method === "POST") {
     	var body = "";
     	request.on("data", function(data) { body += data; });
     	request.on("end", function() {
 			var data = qs.parse(body);
-    		run(response, parts, path, data);
+    		run(response, parts, path, host, data);
     		response.end();
     	});
     }
     else {
 		var data = qs.parse(parts.query);
-    	run(response, parts, path, data);
+    	run(response, parts, path, host, data);
     	response.end();
     }    
 }
