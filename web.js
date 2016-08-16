@@ -1,6 +1,7 @@
 var fs = require('fs');
 var http = require('http');
 var url = require('url');
+var path = require('path');
 var qs = require('querystring');
 var ok = require('./oK');
 var conv = require('./convert');
@@ -9,10 +10,16 @@ var PORT = 8080;
 
 function writer(response) {
 	return function write(x, y) {
-		var s = y.t === 2 ? y.v : conv.tojs(y);
+		var s = conv.tojs(y);
 		if (Array.isArray(s)) { s = s.join('\n') + '\n'; }
 		if (typeof s !== 'string') { throw Error('ERROR: type'); }
-		response.write(s);
+		var f = conv.tojs(x);
+		if (typeof f !== 'string') { throw Error('ERROR: type'); }
+		if (f) {
+			fs.writeFileSync(path.resolve(process.cwd(), f), s);
+		} else {
+			response.write(s);
+		}
 		return y;
 	}
 }
