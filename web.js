@@ -13,7 +13,11 @@ function read(x) {
 	if (typeof f !== 'string') { throw Error('ERROR: type'); }
 	if (!f) { throw Error('ERROR: no path'); }
 	f = path.resolve(process.cwd(), f);
-	return conv.tok(fs.statSync(f).isDirectory() ? fs.readdirSync(f) : fs.readFileSync(f, 'utf8').split(/\r?\n/));
+	try {
+		return conv.tok(fs.statSync(f).isDirectory() ? fs.readdirSync(f) : fs.readFileSync(f, 'utf8').split(/\r?\n/));
+	} catch(Error) {
+		return conv.tok(NaN);
+	}
 }
 
 function writer(response) {
@@ -54,7 +58,12 @@ function handleRequest(request, response){
 
     if(request.method === "POST") {
     	var body = "";
-    	request.on("data", function(data) { body += data; });
+    	request.on("data", function(data) {
+    		body += data;
+    		if(body.length >= 1024*8) {
+    			request.connection.destroy();
+    		}
+    	});
     	request.on("end", function() {
 			var data = qs.parse(body);
     		run(response, parts, path, host, data);
