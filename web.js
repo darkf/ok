@@ -24,13 +24,18 @@ function writer(response) {
 	return function write(x, y) {
 		var s = conv.tojs(y);
 		if (Array.isArray(s)) { s = s.join('\n') + '\n'; }
-		if (typeof s !== 'string') { throw Error('ERROR: type'); }
+		if (typeof s !== 'string' && typeof s !== 'number') { throw Error('ERROR: type'); }
 		var f = conv.tojs(x);
 		if (typeof f !== 'string') { throw Error('ERROR: type'); }
 		if (f) {
 			fs.writeFileSync(path.resolve(process.cwd(), f), s);
 		} else {
-			response.write(s);
+			if(typeof s === 'number' && isNaN(s)) {
+				response.writeHead(500);
+			}
+			else {
+				response.write(s);
+			}
 		}
 		return y;
 	}
